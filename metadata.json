@@ -1,0 +1,8 @@
+{
+  "name": "Smart Academic Department Platform",
+  "description": "منصة إدارة القسم الأكاديمي: المساعد الذكي، الطلبات، الجدول، والتبليغات",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

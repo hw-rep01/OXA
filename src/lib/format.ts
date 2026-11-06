@@ -33,17 +33,34 @@ const ISO_DAY = new Intl.DateTimeFormat("en-CA", {
   day: "2-digit",
 });
 
-/** الخادم يعيد التواريخ بتوقيت UTC، وقد تأتي بلا لاحقة، فنضيف Z عند الغياب. */
+/** الخادم يعيد التواريخ بتوقيت UTC، وقد تأتي بلا لاحقة، فنضيف Z عند الغياب، ونتعامل مع الأوقات المجردة بأمان. */
 export function parseIso(value: string): Date {
-  return new Date(/([zZ]|[+-]\d{2}:?\d{2})$/.test(value) ? value : `${value}Z`);
+  if (!value) return new Date(NaN);
+  const normalized = value.includes(" ") ? value.replace(" ", "T") : value;
+  if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(normalized)) {
+    return new Date(`1970-01-01T${normalized.length === 5 ? `${normalized}:00` : normalized}Z`);
+  }
+  return new Date(/([zZ]|[+-]\d{2}:?\d{2})$/.test(normalized) ? normalized : `${normalized}Z`);
 }
 
 export function formatDateTime(value: string): string {
-  return DATE_TIME.format(parseIso(value));
+  if (!value) return "";
+  const d = parseIso(value);
+  if (isNaN(d.getTime())) return value;
+  return DATE_TIME.format(d);
 }
 
 export function formatTime(value: string): string {
-  return TIME.format(parseIso(value));
+  if (!value) return "";
+  const timeMatch = value.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (timeMatch) {
+    const hours = timeMatch[1].padStart(2, "0");
+    const minutes = timeMatch[2];
+    return `${hours}:${minutes}`;
+  }
+  const d = parseIso(value);
+  if (isNaN(d.getTime())) return value;
+  return TIME.format(d);
 }
 
 /** تاريخ اليوم بصيغة YYYY-MM-DD بتوقيت بغداد، يُستخدم كقيمة لحقول التاريخ. */
@@ -53,7 +70,10 @@ export function todayIsoDay(): string {
 
 /** يعرض يوماً بصيغة YYYY-MM-DD باسم اليوم والتاريخ بالعربية. العراق بلا توقيت صيفي، فالإزاحة ثابتة +03:00. */
 export function formatDayIso(day: string): string {
-  return DAY_LONG.format(new Date(`${day}T12:00:00+03:00`));
+  if (!day) return "";
+  const d = new Date(`${day}T12:00:00+03:00`);
+  if (isNaN(d.getTime())) return day;
+  return DAY_LONG.format(d);
 }
 
 export const CATEGORY_LABELS: Record<RequestCategory, string> = {
